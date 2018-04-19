@@ -1,4 +1,6 @@
-turtles-own [energy branch]
+;; basic filamentous growth - blind agents
+
+turtles-own [energy branch age]
 
 to setup
   clear-all
@@ -8,37 +10,71 @@ to setup
 end
 
 to setup-patches
+  ask patches [ set pcolor 9 ]
 end
 
 to setup-turtles
-  create-turtles 1 [ set energy 20 set branch 0 ]
+  create-turtles 1 [ set energy 2 set branch 0 set age 0 ]
 end
 
 to go
-  eat-patches
-  spawn-turtles
+  regen-patches ;; all tiles regenerate 1 nutrient to max 10
+  eat-patches ;; deplete tile nutrient by 1, increase energy by 1
+  eat-patches ;; eat again, otherwise no net change in energy
+  spawn-turtles ;; use energy to spawn turtles
+  move-turtles ;; move turtles that spawned this turn
+  kill-turtles ;; lose 1 energy, or die if no energy
   tick
 end
 
-to eat-patches
-end
-
-to spawn-turtles
-  ask turtles [
-    if energy >= 20 [
-      set energy energy - 20
-      set branch branch + random 45
-      hatch 1 [ lt branch fd 1 set energy 20 set branch 0 ]
-      hatch 1 [ rt branch fd 1 set energy 20 set branch 0 ]
+to regen-patches ;; all tiles regenerate 1 nutrient to max 10
+  ask patches [
+    if pcolor < 9 [
+      set pcolor pcolor + 1
     ]
   ]
 end
 
-to move-turtles
+to eat-patches ;; deplete tile nutrient by 1, increase energy by 1
   ask turtles [
-    if energy >= 20 [
+    if pcolor > 0 [
+      set pcolor pcolor - 1
+      set energy energy + 1
+    ]
+  ]
+end
+
+to spawn-turtles ;; use energy to spawn turtles
+  ask turtles [
+    if energy > 2 [
+      ifelse random 10 > 8 [ ;; random threshold determines branching probability
+        set energy energy - 2
+        set branch random 180
+        hatch 1 [ lt branch set energy 1 set age 1 ]
+        hatch 1 [ rt branch set energy 1 set age 1 ]
+      ] [
+        set energy energy - 1
+        hatch 1 [ set energy 1 set age 1 ]
+      ]
+    ]
+  ]
+end
+
+to move-turtles ;; move turtles that spawned this turn
+  ask turtles [
+    if age > 0 [
+      set age age - 1
       forward 1
     ]
+  ]
+end
+
+to kill-turtles ;; lose 1 energy, or die if no energy
+  ask turtles [
+    ifelse energy > 0 [
+      set energy energy - 1
+    ][ ;;set pcolor pcolor + 1 nutrient release on cell lysis
+      die ]
   ]
 end
 @#$#@#$#@
@@ -63,17 +99,17 @@ GRAPHICS-WINDOW
 16
 -16
 16
-0
-0
+1
+1
 1
 ticks
 30.0
 
 BUTTON
-49
-157
-112
-190
+27
+143
+90
+176
 NIL
 setup
 NIL
@@ -87,10 +123,10 @@ NIL
 1
 
 BUTTON
-83
-325
-146
-358
+117
+144
+180
+177
 NIL
 go
 T
@@ -102,6 +138,47 @@ NIL
 NIL
 NIL
 1
+
+MONITOR
+29
+191
+86
+236
+Cells
+count turtles
+17
+1
+11
+
+MONITOR
+94
+191
+199
+236
+Nutrient patches
+count patches with [pcolor > 0]
+17
+1
+11
+
+PLOT
+7
+246
+207
+396
+plot 1
+Time
+Cell/Nutrient Count
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -8053223 true "" "plot count turtles"
+"pen-1" 1.0 0 -8330359 true "" "plot count patches with [pcolor > 0]"
 
 @#$#@#$#@
 ## WHAT IS IT?
