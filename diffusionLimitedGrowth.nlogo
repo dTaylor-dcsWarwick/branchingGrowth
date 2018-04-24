@@ -11,22 +11,23 @@ to go
   if not any? particles [ stop ] ;; stops when all existing turtles have aggregated
   spawn-cells
   walk-cells
+  tick
 end
 
 to setup-cells
   create-crystals 1 ;; nucleation site
-  create-particles 100 [ setxy random-xcor random-ycor ]
+  create-particles initial_particles [ setxy random-xcor random-ycor ]
 end
 
 to spawn-cells
-  create-particles 1 [ setxy random-xcor random-ycor ]
+  create-particles particle_spawn_rate [ setxy random-xcor random-ycor ]
 end
 
 to walk-cells
   ask particles [
     right random 360
     forward 1
-    if any? crystals in-radius 1 [
+    if any? crystals in-radius aggregation_range [
       set breed crystals ;; become stationary upon contact with a stationary turtle
     ]
   ]
@@ -92,6 +93,51 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+5
+215
+217
+248
+initial_particles
+initial_particles
+0
+1000
+100.0
+10
+1
+particles
+HORIZONTAL
+
+SLIDER
+-2
+254
+238
+287
+particle_spawn_rate
+particle_spawn_rate
+0
+10
+1.0
+1
+1
+particles/turn
+HORIZONTAL
+
+SLIDER
+7
+306
+188
+339
+aggregation_range
+aggregation_range
+0
+5
+1.0
+0.1
+1
+tiles
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
