@@ -1,3 +1,5 @@
+patches-own [ start-color ]
+
 to setup
   clear-all
   setup-patches
@@ -15,19 +17,27 @@ to setup-patches
 end
 
 to go
+  check-color
   diffuse-patches
   regen-patches
   tick
 end
 
+to check-color
+  ask patches [
+    set start-color pcolor
+  ]
+end
+
 to diffuse-patches
   ask patches [
-    if pcolor < 9 [
-      let p max-one-of neighbors [pcolor]
-      if [pcolor] of p > pcolor [
-        ask p [set pcolor pcolor - 1]
-        set pcolor pcolor + 1
+    while [ start-color > 0 ] [
+      let p min-one-of neighbors [ pcolor ]
+      if [ pcolor ] of p < pcolor [
+        ask p [ set pcolor pcolor + 1 ]
+        set pcolor pcolor - 1
       ]
+      set start-color start-color - 1
     ]
   ]
 end

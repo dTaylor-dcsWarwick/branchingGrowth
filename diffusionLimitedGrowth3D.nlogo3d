@@ -1,66 +1,44 @@
-;; basic nutrient-seeking motion
-
-turtles-own [energy]
+breed [crystals crystal] ;; stationary turtles
+breed [particles particle] ;; mobile turtles
 
 to setup
   clear-all
-  setup-patches
-  setup-turtles
-  ask turtles [ pen-down ]
+  setup-cells
   reset-ticks
 end
 
-to setup-patches
-  ask patches [ set pcolor random 9 ]
-end
-
-to setup-turtles
-  create-turtles 1 [ set energy 1 ]
-end
-
 to go
-
-  if not any? turtles [ stop ]
-;;  sense-patches
-  move-turtles
-  deplete-patches
+  if not any? particles [ stop ] ;; stops when all existing turtles have aggregated
+  spawn-cells
+  walk-cells
   tick
 end
 
-;;to sense-patches
-
-;;end
-
-to move-turtles
-  ask turtles [
-    uphill pcolor
-  ]
+to setup-cells
+  create-crystals 1 ;; nucleation site
+  create-particles initial_particles [ setxyz random-xcor random-ycor random-zcor ]
 end
 
-to deplete-patches
-  ask turtles [
-    ifelse pcolor > 0 [
-      set pcolor pcolor - 1
-    ][
-      die
+to spawn-cells
+  create-particles particle_spawn_rate [ setxyz random-xcor random-ycor random-zcor ]
+end
+
+to walk-cells
+  ask particles [
+    right random 360
+    tilt-up random 360
+    forward 1
+    if any? crystals in-radius aggregation_range [
+      set breed crystals ;; become stationary upon contact with a stationary turtle
     ]
   ]
 end
-
-;; to uphill
-;;move-to patch-here  ;; go to patch center
-;;let p min-one-of neighbors [patch-variable]  ;; or neighbors4
-;;if [patch-variable] of p < patch-variable [
-;;  face p
-;;  move-to p
-;;]
-;;end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-647
-448
+0
+0
+439
+460
 -1
 -1
 13.0
@@ -77,17 +55,19 @@ GRAPHICS-WINDOW
 16
 -16
 16
-0
+-16
+16
+1
 0
 1
 ticks
 30.0
 
 BUTTON
-37
-136
-100
-169
+60
+151
+123
+184
 NIL
 setup
 NIL
@@ -101,10 +81,10 @@ NIL
 1
 
 BUTTON
-109
-137
-172
-170
+188
+177
+251
+210
 NIL
 go
 T
@@ -116,6 +96,51 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+66
+259
+238
+292
+initial_particles
+initial_particles
+0
+1000
+1000.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+74
+308
+246
+341
+particle_spawn_rate
+particle_spawn_rate
+0
+10
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+70
+362
+242
+395
+aggregation_range
+aggregation_range
+0
+10
+0.5
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -459,8 +484,9 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.3
+NetLogo 3D 6.0.3
 @#$#@#$#@
+need-to-manually-make-preview-for-this-model
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
