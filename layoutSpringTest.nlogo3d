@@ -30,17 +30,19 @@ to move-tail
 end
 
 to grow-chain
-  ask max-one-of turtles [ who ][
-    hatch 1 [ rt random 360 fd 1 ]
-    create-link-with max-one-of turtles [ who ]
+  if spawn-cells [
+    ask max-one-of turtles [ who ][
+      hatch 1 [ rt random 360 fd 1 ]
+      create-link-with max-one-of turtles [ who ]
+    ]
   ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
 0
 0
-439
-460
+853
+854
 -1
 -1
 13.0
@@ -53,12 +55,12 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
--16
-16
+-32
+32
+-32
+32
+-32
+32
 1
 0
 1
@@ -143,6 +145,17 @@ repulsion-constant
 1
 NIL
 HORIZONTAL
+
+SWITCH
+24
+160
+143
+193
+spawn-cells
+spawn-cells
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
