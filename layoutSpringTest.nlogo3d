@@ -24,7 +24,7 @@ to setup-turtles
 end
 
 to move-tail
-  repeat 1 [
+  repeat coil-speed [
     layout-spring turtles links spring-constant spring-length repulsion-constant
   ]
 end
@@ -153,9 +153,24 @@ SWITCH
 193
 spawn-cells
 spawn-cells
-1
+0
 1
 -1000
+
+SLIDER
+94
+10
+266
+43
+coil-speed
+coil-speed
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
