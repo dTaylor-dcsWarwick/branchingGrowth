@@ -1,3 +1,5 @@
+turtles-own [ location ]
+
 to setup
   clear-all
   setup-turtles
@@ -6,20 +8,18 @@ end
 
 to go
   move-tail
+  check-length
+  shear-cells
   grow-chain
   tick
 end
 
 to setup-turtles
-  create-turtles 3
+  create-turtles 1
   ask turtles [
     set shape "circle"
-  ]
-  ask turtle 0 [
-    create-link-with turtle 1
-  ]
-  ask turtle 1 [
-    create-link-with turtle 2
+    set size 1.5
+    set location 1
   ]
 end
 
@@ -30,13 +30,55 @@ to move-tail
 end
 
 to grow-chain
-  if spawn-cells [
-    ask max-one-of turtles [ who ][
-      hatch 1 [ rt random 360 fd 1 ]
-      create-link-with max-one-of turtles [ who ]
+  ask turtles [
+    if count link-neighbors < 2 [
+      set location 1
+      if random 100 < growth_chance [
+        set location location + 1
+        ask link-neighbors [
+          set location location of myself + 1
+        ]
+        hatch 1 [ set location 1 create-link-with myself ]
+      ]
+
+
+;to check-length
+;  ask turtles [
+;    if count link-neighbors < 2 [
+;      set location 1
+;    ]
+;  ]
+;  ask turtles [
+;    if count link-neighbors > 1 [
+;      set location [ location ] of min-one-of link-neighbors [ location ] + 1
+;    ]
+;  ]
+;end
+
+to shear-cells
+  ask links [
+    if [ location ] of min-one-of both-ends [ location ] > 2 [
+      die
     ]
   ]
 end
+
+;  ask turtles
+;    if location > 2 and max-one-of link-neighbors location > 2
+
+
+;to grow-chain
+;  if spawn-cells [
+;    ask turtles [
+;      if location < 2 [
+;        if random 100 > 98 [
+;          hatch 1 [ create-link-with myself ]
+;          create-link-with max-one-of turtles [ who ]
+;        ]
+;      ]
+;    ]
+;  ]
+;end
 @#$#@#$#@
 GRAPHICS-WINDOW
 0
@@ -62,7 +104,7 @@ GRAPHICS-WINDOW
 -32
 32
 1
-0
+1
 1
 ticks
 30.0
@@ -153,7 +195,7 @@ SWITCH
 193
 spawn-cells
 spawn-cells
-0
+1
 1
 -1000
 

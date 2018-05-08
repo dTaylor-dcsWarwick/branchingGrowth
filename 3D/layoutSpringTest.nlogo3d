@@ -1,55 +1,49 @@
-breed [crystals crystal] ;; stationary turtles
-breed [particles particle] ;; mobile turtles
-
 to setup
   clear-all
-  setup-cells
+  setup-turtles
   reset-ticks
 end
 
 to go
-  if not any? particles [ stop ] ;; stops when all existing turtles have aggregated
-  spawn-cells
-  walk-cells
+  move-tail
+  grow-chain
   tick
 end
 
-to setup-cells
-  create-crystals 1 ;; nucleation site
-  create-particles initial_particles [ setxyz random-xcor random-ycor random-zcor ]
-end
-
-to spawn-cells
-  create-particles particle_spawn_rate [ setxyz random-xcor random-ycor random-zcor ]
-end
-
-to walk-cells
-  ask particles [
-    right random 360
-    tilt-up random 360
-    forward 1
-    if any? crystals in-radius aggregation_range [
-      set breed crystals ;; become stationary upon contact with a stationary turtle
-    ]
+to setup-turtles
+  create-turtles 3
+  ask turtles [
+    set shape "circle"
+    set size 1.5
+  ]
+  ask turtle 0 [
+    create-link-with turtle 1
+  ]
+  ask turtle 1 [
+    create-link-with turtle 2
   ]
 end
 
-to snapshot
-  export-view (word "dlg_" ticks ".png")
+to move-tail
+  repeat coil-speed [
+    layout-spring turtles links spring-constant spring-length repulsion-constant
+  ]
 end
 
-to follow_origin
-  follow turtle 0
+to grow-chain
+  if spawn-cells [
+    ask max-one-of turtles [ who ][
+      hatch 1 [ rt random 360 fd 1 ]
+      create-link-with max-one-of turtles [ who ]
+    ]
+  ]
 end
-
-to snapshot_360
-  export-view
 @#$#@#$#@
 GRAPHICS-WINDOW
 0
 0
-439
-460
+853
+854
 -1
 -1
 13.0
@@ -62,12 +56,12 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
--16
-16
+-32
+32
+-32
+32
+-32
+32
 1
 0
 1
@@ -75,10 +69,10 @@ ticks
 30.0
 
 BUTTON
-60
-151
-123
-184
+11
+34
+74
+67
 NIL
 setup
 NIL
@@ -92,10 +86,10 @@ NIL
 1
 
 BUTTON
-188
-177
-251
-210
+13
+85
+76
+118
 NIL
 go
 T
@@ -109,100 +103,75 @@ NIL
 1
 
 SLIDER
-66
-259
-238
-292
-initial_particles
-initial_particles
+94
+45
+266
+78
+spring-constant
+spring-constant
 0
-1000
-1000.0
-10
-1
-NIL
-HORIZONTAL
-
-SLIDER
-74
-308
-246
-341
-particle_spawn_rate
-particle_spawn_rate
-0
-10
-0.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-70
-362
-242
-395
-aggregation_range
-aggregation_range
-0
-10
-0.5
+2
+0.2
 0.1
 1
 NIL
 HORIZONTAL
 
-BUTTON
-75
-221
-157
-254
-NIL
-snapshot
-NIL
+SLIDER
+94
+81
+266
+114
+spring-length
+spring-length
+0
+2
+0.1
+0.1
 1
-T
-OBSERVER
 NIL
-NIL
-NIL
-NIL
-1
+HORIZONTAL
 
-BUTTON
-201
-225
-302
-258
-NIL
-follow_origin
-NIL
+SLIDER
+94
+117
+266
+150
+repulsion-constant
+repulsion-constant
+0
+2
+0.1
+0.1
 1
-T
-OBSERVER
 NIL
-NIL
-NIL
-NIL
-1
+HORIZONTAL
 
-BUTTON
-109
-420
-219
-453
-NIL
-snapshot_360
-NIL
+SWITCH
+24
+160
+143
+193
+spawn-cells
+spawn-cells
+0
 1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
+-1000
+
+SLIDER
+94
+10
+266
+43
+coil-speed
+coil-speed
+0
+10
+10.0
 1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
