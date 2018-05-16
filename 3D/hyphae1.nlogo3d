@@ -15,10 +15,9 @@ to go
   shear-cells
   move-cells
   check-ID
-  ;check-interaction
-  grow-chain
+  grow-cells
   ask turtles [
-    set label cell-ID
+    set label location
   ]
   tick
 end
@@ -31,7 +30,7 @@ to setup-turtles
     set location 0
     set cell-ID 0
     set fixed 0
-    set label cell-ID
+    set label location
   ]
 end
 
@@ -43,14 +42,15 @@ end
 
 to shear-cells; Cells break apart at the middle if they consist of 6+ sections
   ask links [
-    if [ location ] of min-one-of both-ends [ location ] >= 2 [
+    if random 100 < shear-chance [
       ask both-ends [; Update turtle locations to 0 where the break is about to form
         set location 0
         propagate-location-shear
       ]
       set cell-count cell-count + 1 ;Update CellID of one of daughter cells
-      ask one-of both-ends [
+      ask max-one-of both-ends [ who ] [
         set cell-ID cell-count
+        set color random 140
       ]
       die
     ]
@@ -60,15 +60,7 @@ end
 to check-ID; Other turtles in new cell update ID (can't do this before link breaks)
   ask turtles with [ cell-ID > cell-count-last ] [
     propagate-cell-ID
-  ]
-end
-
-to check-interaction
-  ask turtles [
-    let n cell-ID
-    ask turtles in-radius 1 with [ cell-ID != n ] [
-      create-link-with myself [ tie ]
-    ]
+    propagate-color
   ]
 end
 
@@ -77,7 +69,7 @@ to move-cells ;Cell shape resolves according to spring algorithm
   repeat coil-speed [
     let cell-number 0
     while [ cell-number <= cell-count ] [
-      ask turtles with [ cell-ID = cell-number ][
+      ask turtles with [ cell-ID = cell-number ] [
       layout-spring turtles in-radius 1 links spring-constant spring-length repulsion-constant
       ]
     set cell-number cell-number + 1
@@ -85,14 +77,36 @@ to move-cells ;Cell shape resolves according to spring algorithm
   ]
 end
 
-to grow-chain ;Sections on ends of cells have a chance to reproduce
+to grow-cells ;Sections on ends of cells have a chance to reproduce
   ask turtles [
-    if count link-neighbors < 2 and random 100 < grow-chance [
-      hatch 1 [ set location 0 create-link-with myself ]
-      if count link-neighbors > 1 [
-        propagate-location-growth
-      ]
+    if count link-neighbors > 1 and random 100 < branch-chance [
+      hatch 1 [ rt random 360 tilt-up random 360 fd 1 set location 0 create-link-with myself ]
+      set location 1
+      propagate-location-branch
     ]
+    if count link-neighbors = 1 and random 100 < grow-chance [
+      hatch 1 [ rt random 360 tilt-up random 360 fd 1 set location 0 create-link-with myself ]
+        propagate-location-growth
+    ]
+    if count link-neighbors = 0 and random 100 < grow-chance [
+    hatch 1 [ rt random 360 tilt-up random 360 fd 1 set location 0 create-link-with myself ]
+    ]
+  ]
+end
+
+to propagate-cell-ID ;"cell-ID" value used by turtles to identify other turtles that aren't part of the same cell
+    let c cell-ID
+  ask link-neighbors with [ cell-ID < c ] [
+    set cell-ID c
+    propagate-cell-ID
+  ]
+end
+
+to propagate-color ; each new cell given a unique color
+  let c color
+  ask link-neighbors with [ color != c ] [
+    set color c
+    propagate-color
   ]
 end
 
@@ -114,11 +128,11 @@ to propagate-location-growth ;"location" value used to determine section locatio
   ]
 end
 
-to propagate-cell-ID ;"cell-ID" value used by turtles to identify other turtles that aren't part of the same cell
-    let c cell-ID
-  ask link-neighbors with [ cell-ID < c ] [
-    set cell-ID c
-    propagate-cell-ID
+to propagate-location-branch ;"location" value used to determine section location for growth and shearing is updated
+  let z location
+  ask link-neighbors with [ location > z + 1 ] [
+   set location z + 1
+   propagate-location-branch
   ]
 end
 @#$#@#$#@
@@ -224,20 +238,20 @@ repulsion-constant
 repulsion-constant
 0
 2
-0.1
+0.2
 0.1
 1
 NIL
 HORIZONTAL
 
 SWITCH
-147
-189
-266
-222
-grow-cells
-grow-cells
-1
+151
+333
+285
+366
+growth-toggle
+growth-toggle
+0
 1
 -1000
 
@@ -250,7 +264,7 @@ coil-speed
 coil-speed
 0
 10
-10.0
+5.0
 1
 1
 NIL
@@ -265,21 +279,51 @@ grow-chance
 grow-chance
 0
 100
-1.0
+10.0
 1
 1
 %/tick
 HORIZONTAL
 
 CHOOSER
-7
-189
-145
-234
-interaction-type
-interaction-type
-"none" "adhere" "bounce"
+11
+333
+159
+378
+shear-chance-modifier
+shear-chance-modifier
+"none" "location"
 0
+
+SLIDER
+94
+189
+266
+222
+shear-chance
+shear-chance
+0
+100
+0.0
+1
+1
+%/tick
+HORIZONTAL
+
+SLIDER
+94
+225
+266
+258
+branch-chance
+branch-chance
+0
+1
+1.0
+0.01
+1
+%/tick
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
