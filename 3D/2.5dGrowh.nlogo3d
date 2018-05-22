@@ -1,153 +1,64 @@
-turtles-own [ location cell-ID fixed ]
-patches-own [ agar ]
-globals [ cell-count cell-count-last ]
+;patches-own [ energy ]
+;turtles-own [ energy ]
 
 to setup
   clear-all
   setup-turtles
   setup-patches
-  set cell-count 0; Total number of cells this tick
-  set cell-count-last 0; Total number of cells last tick
   reset-ticks
 end
 
-to go
-  set cell-count-last cell-count
-  shear-cells
-  move-cells
-  check-ID
-  grow-cells
-  ask turtles [
-    set label location
-  ]
-  tick
-end
-
 to setup-turtles
-  create-turtles 1
-  ask turtles [
-    set shape "circle"
-    set size 1.5
-    set location 0
-    set cell-ID 0
-    set fixed 0
-    set label location
-  ]
+  create-turtles 1 [ set pitch 0 ]
 end
 
 to setup-patches
-  ask patches with [ pycor < 0 ] [
-    set agar 1
-  ]
 end
 
-to shear-cells; Cells break apart at the middle if they consist of 6+ sections
-  ask links [
-    if random 100 < shear-chance [
-      ask both-ends [; Update turtle locations to 0 where the break is about to form
-        set location 0
-        propagate-location-shear
-      ]
-      set cell-count cell-count + 1 ;Update CellID of one of daughter cells
-      ask max-one-of both-ends [ who ] [
-        set cell-ID cell-count
-        set color random 140
-      ]
-      die
-    ]
-  ]
+to go
+  grow-cells
+  move-cells
+  ;regenerate-patches
+  ;diffuse=patches
+  tick
 end
 
-to check-ID; Other turtles in new cell update ID (can't do this before link breaks)
-  ask turtles with [ cell-ID > cell-count-last ] [
-    propagate-cell-ID
-    propagate-color
-  ]
-end
-
-to move-cells ;Cell shape resolves according to spring algorithm
-
-  repeat coil-speed [
-    ask turtles with [ agar = 0 ] [
-        set ycor ycor - 0.1
-    ]
-        ask turtles with [ agar = 1 ] [
-        set ycor ycor + 0.1
-    ]
-    let cell-number 0
-    while [ cell-number <= cell-count ] [
-      ask turtles with [ cell-ID = cell-number ] [
-      layout-spring turtles in-radius 1 links spring-constant spring-length repulsion-constant
-      ]
-    set cell-number cell-number + 1
-    ]
-  ]
-end
-
-to grow-cells ;Sections on ends of cells have a chance to reproduce
+to grow-cells
   ask turtles [
     if count link-neighbors > 1 and random 100 < branch-chance [
-      hatch 1 [ rt random 360 fd 1 set location 0 create-link-with myself ]
-      set location 1
-      propagate-location-branch
+      hatch 1 [ rt random 360 fd 1 create-link-with myself ]
     ]
     if count link-neighbors = 1 and random 100 < grow-chance [
-      hatch 1 [ fd 1 set location 0 create-link-with myself ]
-        propagate-location-growth
+      hatch 1 [ fd 1 create-link-with myself ]
     ]
     if count link-neighbors = 0 and random 100 < grow-chance [
-    hatch 1 [ rt random 360 tilt-up random 360 fd 1 set location 0 create-link-with myself ]
+    hatch 1 [ rt random 360 fd 1 create-link-with myself ]
     ]
   ]
 end
 
-to propagate-cell-ID ;"cell-ID" value used by turtles to identify other turtles that aren't part of the same cell
-    let c cell-ID
-  ask link-neighbors with [ cell-ID < c ] [
-    set cell-ID c
-    propagate-cell-ID
+to move-cells
+  ask turtles [
+    ask turtles in-radius 0.5 [
+      set zcor zcor - 0.25
+      ask myself [
+        set zcor zcor + 0.25
+      ]
+    ]
   ]
 end
 
-to propagate-color ; each new cell given a unique color
-  let c color
-  ask link-neighbors with [ color != c ] [
-    set color c
-    propagate-color
-  ]
-end
-
-to propagate-location-shear ;"location" value used to determine section location for growth and shearing is updated
-  let x location
-  ask link-neighbors with [ location > x ] [
-    set location x + 1
-    propagate-location-shear
-  ]
-end
-
-to propagate-location-growth ;"location" value used to determine section location for growth and shearing is updated
-  let y location
-  if not any? link-neighbors with [ location < y ] [
-    set location y + 1
-  ]
-  ask link-neighbors with [ location > y ] [
-    propagate-location-growth
-  ]
-end
-
-to propagate-location-branch ;"location" value used to determine section location for growth and shearing is updated
-  let z location
-  ask link-neighbors with [ location > z + 1 ] [
-   set location z + 1
-   propagate-location-branch
-  ]
-end
+;to regenerate-patches
+;  ask patches with-max [ ycor ] [
+;    set energy energy + 1
+;  ]
+;end
 @#$#@#$#@
 GRAPHICS-WINDOW
 0
 0
-853
-854
+437
+438
 -1
 -1
 13.0
@@ -160,12 +71,12 @@ GRAPHICS-WINDOW
 1
 1
 1
--32
-32
--32
-32
--32
-32
+-16
+16
+-16
+16
+-8
+8
 1
 1
 1
@@ -173,9 +84,9 @@ ticks
 30.0
 
 BUTTON
-25
+8
 10
-88
+71
 43
 NIL
 setup
@@ -190,10 +101,10 @@ NIL
 1
 
 BUTTON
-25
-45
-88
-78
+74
+10
+137
+43
 NIL
 go
 T
@@ -207,81 +118,10 @@ NIL
 1
 
 SLIDER
-108
-45
-280
-78
-spring-constant
-spring-constant
-0
-2
-0.2
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-108
-81
-280
-114
-spring-length
-spring-length
-0
-2
-0.1
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-108
-117
-280
-150
-repulsion-constant
-repulsion-constant
-0
-2
-0.2
-0.1
-1
-NIL
-HORIZONTAL
-
-SWITCH
-4
-309
-138
-342
-growth-toggle
-growth-toggle
-0
-1
--1000
-
-SLIDER
-108
-10
-280
-43
-coil-speed
-coil-speed
-0
-10
-5.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-108
-153
-280
-186
+9
+46
+181
+79
 grow-chance
 grow-chance
 0
@@ -292,41 +132,16 @@ grow-chance
 %/tick
 HORIZONTAL
 
-CHOOSER
-3
-261
-151
-306
-shear-chance-modifier
-shear-chance-modifier
-"none" "location"
-0
-
 SLIDER
-108
-189
-280
-222
-shear-chance
-shear-chance
-0
-1
-0.0
-0.01
-1
-%/tick
-HORIZONTAL
-
-SLIDER
-108
-225
-280
-258
+7
+119
+182
+152
 branch-chance
 branch-chance
 0
 1
-0.01
+0.1
 0.01
 1
 %/tick
