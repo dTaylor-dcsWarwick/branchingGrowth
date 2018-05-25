@@ -1,5 +1,5 @@
 ;patches-own [ energy ]
-;turtles-own [ energy ]
+turtles-own [ root aerial ]
 
 to setup
   clear-all
@@ -10,6 +10,7 @@ end
 
 to setup-turtles
   create-turtles 1 [ set pitch 0
+    set color brown
     ;set shape "circle"
     set size 1.5 ]
 end
@@ -19,41 +20,63 @@ end
 
 to go
   grow-cells
-  ;move-cells
+  move-cells
+  root-cells
+  aerial-cells
   ;regenerate-patches
   ;diffuse=patches
   tick
 end
 
 to grow-cells
-  ask turtles [
-    if count link-neighbors <= 1 [
+  ask turtles with [ count link-neighbors <= 1 and color = brown ] [
+    if random 100 < grow-chance [
       hatch 1 [ rt random-normal 0 turn-stdev fd 1 create-link-with myself ]
       if random 100 < branch-chance [
-        hatch 1 [ rt random 360 fd 1 create-link-with myself move-cells ]
+        hatch 1 [ rt random 360 fd 1 create-link-with myself place-cell ]
+      ]
+      if random 100 < root-chance [
+        hatch 1 [ rt random-normal 0 turn-stdev set color grey set zcor zcor - 0.5 create-link-with myself ]
+      ]
+      if random 100 < aerial-chance [
+        hatch 1 [ rt random-normal 0 turn-stdev set color white set zcor zcor + 0.5 create-link-with myself ]
       ]
     ]
   ]
 end
 
+to root-cells
+  ask turtles with [ count link-neighbors <= 1 and color = grey ] [
+    if random 100 < root-chance [
+      hatch 1 [ rt random-normal 0 turn-stdev fd 0.5 set zcor zcor - 0.5 create-link-with myself ]
+    ]
+  ]
+end
 
-;    if count link-neighbors > 1 and random 100 < branch-chance [
-;      hatch 1 [ rt random 360 fd 1 create-link-with myself ]
-;    ]
-;    if count link-neighbors = 1 and random 100 < grow-chance [
-;      hatch 1 [ fd 1 create-link-with myself ]
-;    ]
-;    if count link-neighbors = 0 and random 100 < grow-chance [
-;    hatch 1 [ rt random 360 fd 1 create-link-with myself ]
-;    ]
-;  ]
-;end
+to aerial-cells
+  ask turtles with [ count link-neighbors <= 1 and color = white ] [
+    if random 100 < aerial-chance [
+      hatch 1 [ rt random-normal 0 turn-stdev fd 0.5 set zcor zcor + 0.5 create-link-with myself ]
+    ]
+  ]
+end
+
+to place-cell
+  if zcor > 0 [
+    set zcor zcor - 0.25
+  ]
+  if zcor < 0 [
+    set zcor zcor + 0.25
+  ]
+end
 
 to move-cells
-  ask turtles in-radius 0.5 [
-    set zcor zcor - 0.25
-    ask myself [
-      set zcor zcor + 0.25
+  ask turtles with [ color = brown ] [
+    ask turtles in-radius 0.5 [
+      set zcor zcor - 0.25
+      ask myself [
+        set zcor zcor + 0.25
+      ]
     ]
   ]
 end
@@ -136,7 +159,7 @@ grow-chance
 grow-chance
 0
 100
-10.0
+25.0
 1
 1
 %/tick
@@ -151,7 +174,7 @@ branch-chance
 branch-chance
 0
 10
-1.0
+5.0
 1
 1
 %/tick
@@ -200,6 +223,36 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot count turtles"
+
+SLIDER
+10
+159
+182
+192
+root-chance
+root-chance
+0
+10
+2.0
+1
+1
+%/tick
+HORIZONTAL
+
+SLIDER
+11
+198
+183
+231
+aerial-chance
+aerial-chance
+0
+10
+2.0
+1
+1
+%/tick
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
