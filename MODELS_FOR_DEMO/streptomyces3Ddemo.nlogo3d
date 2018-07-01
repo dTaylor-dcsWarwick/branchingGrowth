@@ -55,8 +55,8 @@ to go
     grow-root-cells
     grow-aerial-cells
   ]
-  if stop-at-max-turtles [
-    if count turtles > max-turtles or count veg-tips = 0 [
+  if stop-at-max-cells [
+    if count turtles > max-cells or count veg-tips = 0 [
       show (word "Execution finished in " timer " seconds")
       stop
     ]
@@ -89,7 +89,7 @@ to grow-veg-cells
         if time-since-last-branch >= branching-interval [
           set time-since-last-branch 0
           if cell-death [
-            ifelse count veg-cells in-radius competition-radius > max-turtles-in-radius [
+            ifelse count veg-cells in-radius competition-radius > max-cells-in-radius [
               set breed veg-cells
             ] [
               ifelse direction = 0 [
@@ -282,7 +282,7 @@ MONITOR
 11
 314
 56
-# Turtles
+# Cells
 count turtles
 0
 1
@@ -401,8 +401,8 @@ SWITCH
 47
 172
 80
-stop-at-max-turtles
-stop-at-max-turtles
+stop-at-max-cells
+stop-at-max-cells
 0
 1
 -1000
@@ -412,8 +412,8 @@ SLIDER
 84
 180
 117
-max-turtles
-max-turtles
+max-cells
+max-cells
 0
 50000
 10000.0
@@ -519,8 +519,8 @@ SLIDER
 745
 183
 778
-max-turtles-in-radius
-max-turtles-in-radius
+max-cells-in-radius
+max-cells-in-radius
 0
 100
 100.0

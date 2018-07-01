@@ -1,138 +1,173 @@
-extensions [ vid ]
+;; basic filamentous growth - blind agents
+;; includes more sliders
+;; includes diffusion
 
-;patches-own [ energy ]
-
-breed [ cells cell ]
-breed [ tips tip ]
-
-cells-own [ direction ]
-tips-own [ direction time-since-last-branch time-to-start-growth ]
-
+turtles-own [ energy branch ]
+patches-own [ start-color ]
 
 to setup
   clear-all
-  vid:reset-recorder
+  setup-patches
   setup-turtles
   reset-ticks
-  if recording [
-    vid:start-recorder
-  ]
+end
+
+to setup-patches
+  ask patches [ set pcolor nutrient-max-tile ]
 end
 
 to setup-turtles
-  create-turtles 1 [
-    set breed tips
-    set time-since-last-branch 0
-    set time-to-start-growth 0
-    set color brown
-    ;set shape "circle"
-    set size 1.5 ]
+  create-turtles 1 [ set energy 0 set branch 0 ]
 end
 
 to go
-  if (ticks < 1) [ reset-timer ]
+  repeat nutrient-regen-rate [
+    regen-patches ;; all tiles regenerate 1 nutrient to max 10
+  ]
+  repeat nutrient-uptake-rate [
+    eat-patches ;; deplete tile nutrient by 1, increase energy by 1
+  ]
+  spawn-turtles ;; use energy to spawn turtles
+  repeat nutrient-use-rate [
+    kill-turtles ;; lose 1 energy, or die if no energy
+  ]
+  repeat nutrient-diffusion-rate  [
+    diffuse-patch-nutrients
+  ]
+  repeat intercell-diffusion-rate [
+    diffuse-cell-nutrients
+  ]
+  if auto-stop and not any? patches with [ pcolor > 0 ] [
+    stop
+  ]
+  if auto-stop and not any? turtles [
+    stop
+  ]
+  if auto-stop and not any? patches with [ nutrient-max-tilepcolor nutrient-max-tile > 1 ] and not any? turtles with [  [
+    stop
+  ]
   tick
-  grow-cells
-  if stop-at-max-cells [
-    if count turtles > max-cells or count tips = 0 [
-      show (word "Execution finished in " timer " seconds")
-      stop
-    ]
-  ]
-  if recording [
-    vid:record-view
-  ]
-  ;regenerate-patches
-  ;diffuse=patches
 end
 
-to grow-cells
-  let x-min min-pxcor + 1
-  let y-min min-pycor + 1
-  let x-max max-pxcor - 1
-  let y-max max-pycor - 1
-  ask tips [
-    ifelse pxcor >= x-min and pxcor <= x-max and pycor >= y-min and pycor <= y-max [
-      ifelse time-to-start-growth <= 0 [
-        let theta random-normal 0 turn-stdev
-        ifelse theta < 0 [
-          set direction 0
+to regen-patches ;; all tiles regenerate 1 nutrient to max 10
+  ask patches [
+    if pcolor < nutrient-max-tile [
+      set pcolor pcolor + 1
+    ]
+  ]
+end
+
+to eat-patches ;; deplete tile nutrient by 1, increase energy by 1
+  ask turtles [
+    if pcolor > 0 [
+      set pcolor pcolor - 1
+      set energy energy + 1
+    ]
+  ]
+end
+
+to spawn-turtles ;; use energy to spawn turtles
+  ask turtles [
+    if energy > 2 [
+      ifelse random 100 < branch-chance [ ;; random threshold determines branching probability
+        set branch random 180
+        ifelse symmetrical-branching [
+          branch-left
+          branch-right
         ] [
-          set direction 1
-        ]
-        ;set label time-since-last-branch
-        set time-since-last-branch time-since-last-branch + 1
-        if time-since-last-branch >= branching-interval [
-          set time-since-last-branch 0
-          if cell-death [
-            ifelse count cells in-radius competition-radius > max-cells-in-radius [
-              set color orange
-              set breed cells
-            ] [
-              ifelse direction = 0 [
-                hatch 1 [ lt random-normal branch-angle branch-angle-stdev fd 1
-                  set time-since-last-branch 0 - new-branch-branching-delay
-                  set time-to-start-growth new-branch-extension-delay
-                  create-link-with myself ]
-              ] [
-                hatch 1 [ rt random-normal branch-angle branch-angle-stdev fd 1
-                  set time-since-last-branch 0 - new-branch-branching-delay
-                  set time-to-start-growth new-branch-extension-delay
-                  create-link-with myself ]
-              ]
-            ]
+          ifelse random 2 > 0 [
+            branch-left
+          ] [
+            branch-right
           ]
         ]
-        hatch 1 [ rt random-normal 0 turn-stdev fd 1 create-link-with myself ]
-        set breed cells
       ] [
-        set time-to-start-growth time-to-start-growth - 1
+        grow-forward
       ]
-    ] [
-      set breed cells
     ]
   ]
 end
 
-to assign-boundaries
-  let x-min min-pxcor + 1
-  let y-min min-pycor + 1
-  let x-max max-pxcor - 1
-  let y-max max-pycor - 1
+to kill-turtles ;; lose 1 energy, or die if no energy
+  ask turtles [
+    ifelse energy > 0 [
+      set energy energy - 1
+    ][ ;;set pcolor pcolor + 1 nutrient release on cell lysis
+      die ]
+  ]
+end
+
+to diffuse-patch-nutrients
+  ask patches [
+    if pcolor > 0 [
+      let p min-one-of neighbors [ pcolor ]
+      if [ pcolor ] of p < pcolor [
+        ask p [ set pcolor pcolor + 1 ]
+        set pcolor pcolor - 1
+      ]
+    ]
+  ]
+end
+
+to diffuse-cell-nutrients
+  ask turtles [
+    if energy > 0 and any? link-neighbors [
+      let t min-one-of link-neighbors [ energy ]
+      if [ energy ] of t < energy [
+        ask t [ set energy energy + 1 ]
+        set energy energy - 1
+      ]
+    ]
+  ]
+end
+
+to grow-forward
+  set energy energy - nutrient-use-rate
+  hatch 1 [ fd 1 set energy nutrient-use-rate create-link-with myself]
+end
+
+to branch-left
+  set energy energy - nutrient-use-rate
+  hatch 1 [ lt branch fd 1 set energy nutrient-use-rate create-link-with myself ]
+end
+
+to branch-right
+  set energy energy - nutrient-use-rate
+  hatch 1 [ rt branch fd 1 set energy nutrient-use-rate create-link-with myself ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-224
+210
 10
-752
-539
+647
+448
 -1
 -1
-8.0
+13.0
 1
 10
 1
 1
 1
 0
-1
-1
-1
--32
-32
--32
-32
 0
 0
+1
+-16
+16
+-16
+16
+1
+1
 1
 ticks
 30.0
 
 BUTTON
-8
-10
-71
-43
+16
+17
+79
+50
 NIL
 setup
 NIL
@@ -146,10 +181,10 @@ NIL
 1
 
 BUTTON
-74
-10
-137
-43
+82
+17
+145
+50
 NIL
 go
 T
@@ -162,40 +197,36 @@ NIL
 NIL
 1
 
-SLIDER
-8
-269
-180
-302
-turn-stdev
-turn-stdev
-0
+MONITOR
+650
 10
-5.0
-0.1
+707
+55
+Cells
+count turtles
+17
 1
-NIL
-HORIZONTAL
+11
 
 MONITOR
-9
-514
-73
-559
-# Cells
-count turtles
-0
+780
+10
+885
+55
+Nutrient patches
+count patches with [pcolor > 0]
+17
 1
 11
 
 PLOT
-9
-563
-209
-713
-plot 1
-Ticks
-Turtles
+650
+58
+850
+208
+Cell Count by Time
+Time
+Cell Count
 0.0
 10.0
 0.0
@@ -204,168 +235,123 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count turtles"
+"default" 1.0 0 -8053223 true "" "plot count turtles"
 
 SLIDER
-8
-136
-217
-169
-new-branch-extension-delay
-new-branch-extension-delay
+16
+99
+188
+132
+branch-chance
+branch-chance
 0
 100
-10.0
+5.0
 1
 1
 NIL
 HORIZONTAL
 
-SLIDER
-8
-175
-217
-208
-new-branch-branching-delay
-new-branch-branching-delay
+SWITCH
+16
+137
+195
+170
+symmetrical-branching
+symmetrical-branching
 0
-100
-10.0
 1
-1
-NIL
-HORIZONTAL
+-1000
 
 SLIDER
-8
-215
-180
-248
-branching-interval
-branching-interval
-0
-100
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-8
-347
-180
-380
-branch-angle-stdev
-branch-angle-stdev
+16
+183
+188
+216
+nutrient-regen-rate
+nutrient-regen-rate
 0
 10
-5.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SWITCH
-8
-47
-172
-80
-stop-at-max-cells
-stop-at-max-cells
-0
-1
--1000
-
-SLIDER
-8
-84
-180
-117
-max-cells
-max-cells
-0
-50000
-10000.0
-1000
-1
-NIL
-HORIZONTAL
-
-SLIDER
-8
-308
-180
-341
-branch-angle
-branch-angle
-0
-180
-90.0
+1.0
 1
 1
 NIL
 HORIZONTAL
 
-SWITCH
-9
-391
-119
-424
-cell-death
-cell-death
-0
-1
--1000
-
 SLIDER
-9
-432
-181
-465
-competition-radius
-competition-radius
+16
+219
+188
+252
+nutrient-uptake-rate
+nutrient-uptake-rate
 0
 10
 2.0
-0.1
+1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-9
-474
-181
-507
-max-cells-in-radius
-max-cells-in-radius
+16
+255
+188
+288
+nutrient-use-rate
+nutrient-use-rate
 0
-100
-10.0
+10
+1.0
 1
 1
 NIL
 HORIZONTAL
 
-SWITCH
-224
-555
-332
-588
-recording
-recording
+MONITOR
+710
+10
+777
+55
+Coverage
+count patches with [ any? turtles-here ]
+17
 1
+11
+
+SWITCH
+16
+54
+126
+87
+auto-stop
+auto-stop
+0
 1
 -1000
 
-BUTTON
-345
-555
-478
-588
+SLIDER
+16
+291
+188
+324
+nutrient-max-tile
+nutrient-max-tile
+0
+9
+9.0
+1
+1
 NIL
-vid:reset-recorder
+HORIZONTAL
+
+BUTTON
+650
+352
+771
+385
+Snapshot (View)
+export-view (word picture-filename \".png\")
 NIL
 1
 T
@@ -377,23 +363,23 @@ NIL
 1
 
 INPUTBOX
-223
-595
-478
-655
-video-save-filename
-0
+650
+388
+907
+448
+picture-filename
+test
 1
 0
 String
 
 BUTTON
-223
-663
-473
-696
-NIL
-vid:save-recording video-save-filename
+776
+352
+907
+385
+Snapshot Window
+export-interface (word picture-filename \".png\")
 NIL
 1
 T
@@ -404,33 +390,53 @@ NIL
 NIL
 1
 
-INPUTBOX
-223
-714
-486
-774
-picture-save-filename
-0
-1
-0
-String
+PLOT
+650
+207
+850
+357
+Area Coverage by Time
+Time
+Patches Covered
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count patches with [ any? turtles-here ]"
 
-BUTTON
-223
-782
-444
-815
-NIL
-export-view picture-save-filename
-NIL
+SLIDER
+16
+327
+188
+360
+intercell-diffusion-rate
+intercell-diffusion-rate
+0
+10
+0.0
 1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
 1
+NIL
+HORIZONTAL
+
+SLIDER
+16
+363
+189
+396
+nutrient-diffusion-rate
+nutrient-diffusion-rate
+0
+10
+0.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
