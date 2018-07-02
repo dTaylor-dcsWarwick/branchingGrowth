@@ -24,7 +24,7 @@ to setup-turtles
     set breed tips
     set time-since-last-branch 0
     set time-to-start-growth 0
-    set color brown
+    set color orange
     ;set shape "circle"
     set size 1.5 ]
 end
@@ -66,7 +66,7 @@ to grow-cells
           set time-since-last-branch 0
           if cell-death [
             ifelse count cells in-radius competition-radius > max-cells-in-radius [
-              set color orange
+              set color brown
               set breed cells
             ] [
               ifelse direction = 0 [
@@ -84,11 +84,13 @@ to grow-cells
           ]
         ]
         hatch 1 [ rt random-normal 0 turn-stdev fd 1 create-link-with myself ]
+        set color brown
         set breed cells
       ] [
         set time-to-start-growth time-to-start-growth - 1
       ]
     ] [
+      set color brown
       set breed cells
     ]
   ]

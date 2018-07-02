@@ -38,7 +38,7 @@ to setup-turtles
     set breed veg-tips
     set time-since-last-branch 0
     set time-to-start-growth 0
-    set color brown
+    set color orange
     ;set shape "circle"
     set size 1.5 ]
 end
@@ -91,6 +91,7 @@ to grow-veg-cells
           if cell-death [
             ifelse count veg-cells in-radius competition-radius > max-cells-in-radius [
               set breed veg-cells
+              set color brown
             ] [
               ifelse direction = 0 [
                 hatch 1 [ lt random-normal branch-angle branch-angle-stdev fd 1
@@ -117,11 +118,13 @@ to grow-veg-cells
         ]
         hatch 1 [ rt random-normal 0 turn-stdev fd 1 create-link-with myself ]
         set breed veg-cells
+        set color brown
       ] [
         set time-to-start-growth time-to-start-growth - 1
       ]
     ] [
       set breed veg-cells
+      set color brown
     ]
   ]
 end
@@ -315,7 +318,7 @@ root-chance
 root-chance
 0
 10
-10.0
+1.0
 1
 1
 %
@@ -330,7 +333,7 @@ aerial-chance
 aerial-chance
 0
 10
-10.0
+1.0
 1
 1
 %
@@ -444,7 +447,7 @@ SWITCH
 433
 vertical-growth
 vertical-growth
-0
+1
 1
 -1000
 
