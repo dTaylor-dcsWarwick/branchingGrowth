@@ -17,7 +17,7 @@ to setup-patches
 end
 
 to setup-turtles
-  create-turtles 1 [ set energy 0 set branch 0 ]
+  create-turtles 1 [ set energy 0 set branch 0 set heading 0 ]
 end
 
 to go
@@ -368,7 +368,7 @@ INPUTBOX
 907
 448
 picture-filename
-test
+model_2.6
 1
 0
 String
@@ -432,7 +432,7 @@ nutrient-diffusion-rate
 nutrient-diffusion-rate
 0
 10
-0.0
+1.0
 1
 1
 NIL
